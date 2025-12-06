@@ -38,3 +38,4 @@
           JwtAuthFilter jwtAuthFilter() {
 			  return new JwtAuthFilter();
           }
+   -> In SecurityConfig file, Both JwtAuthFilter and UserDetailsService can be @Autowired and @Bean means at a time, Both are @Autowired OR Both are @Bean is fine. But one is @Autowired and one is @Bean is not fine give us circular dependency error.
