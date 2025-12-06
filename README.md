@@ -42,4 +42,8 @@
           }
    -> In SecurityConfig file, Both JwtAuthFilter and UserDetailsService can be @Autowired and @Bean means at a time, Both are @Autowired OR Both are @Bean is fine. But one is @Autowired and one is @Bean is not fine give us circular dependency error.
 
-5. Simple Version of JWTService/JWTUtil/JWTHelper
+5. Simple Version of JWTService/JWTUtil/JWTHelper.
+
+6. Add AuthEntryPoint -> If an unauthenticated request tries to access a protected API, call authEntryPoint. So the entry point runs ONLY when authentication fails.
+
+7. Simple version of SecurityConfig, JWTAuthFilter and LoginController.  
