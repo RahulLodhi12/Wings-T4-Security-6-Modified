@@ -3,7 +3,9 @@
 2. Use @RequestHeader("Authorization") String jwt in method parameter, instead of Principal object.
 String username = extractUsernameFromToken(jwt);
 public String extractUsernameFromToken(String jwt) {
+
 		if(jwt!=null && jwt.startsWith("Bearer ")) {
+
 			String token = jwt.substring(7);
 			String username = jwtService.extractUsername(token);
 			return username;
@@ -11,4 +13,4 @@ public String extractUsernameFromToken(String jwt) {
 		return null;
 	}
 
-3. 
+4. 
