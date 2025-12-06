@@ -2,7 +2,10 @@ package com.wingsUpSS6.service;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -53,6 +56,30 @@ public class JwtService { //OR JwtUtil
     	Date expiry = extractExpiry(token);
     	return username.equals(user.getUsername()) && expiry.after(new Date(System.currentTimeMillis()));
     }
+    
+    
+    //Testing
+    public static void main(String[] args) {
+		UserDetails user = new User("rahul", "lodhi123", List.of(new SimpleGrantedAuthority("ADMIN")));
+    	//UserDeatils is interface and User is class, and User class implements UserDetails interface
+    	
+		JwtService jwtService = new JwtService();
+		
+    	String token = jwtService.generateToken(user.getUsername());
+		System.out.println(token);
+		
+		Claims claims = jwtService.extractAllClaims(token);
+		System.out.println(claims);
+		
+		Date expiry = jwtService.extractExpiry(token);
+		System.out.println(expiry);
+		
+		String username = jwtService.extractUsername(token);
+		System.out.println(username);
+		
+		boolean validateToken = jwtService.validateToken(token, user);
+		System.out.println(validateToken);
+	}
 }
 
 

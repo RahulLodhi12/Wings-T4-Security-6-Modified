@@ -62,84 +62,47 @@ public class ConsumerController {
 	@PostMapping("/cart")
 	public ResponseEntity<Object> postCart(@RequestHeader("Authorization") String jwt, @RequestBody Product product){
 		String username = extractUsernameFromToken(jwt);
-		Optional<UserInfo> user = userRepo.findByUsername(username);
-		Optional<Product> dbProduct = productRepo.findById(product.getProductId());
-		
-		if (user.isEmpty()) return ResponseEntity.badRequest().body("User not found");
-		if(dbProduct.isEmpty()) return ResponseEntity.badRequest().body("Product not found");
-		
 		Optional<Cart> cartOpt = cartRepo.findByUserUsername(username);
-	
-		
-		Cart cart;
 
 		if (cartOpt.isPresent()) {
-		    cart = cartOpt.get();
-		} else {
-		    Cart newCart = new Cart();
-		    newCart.setUser(user.get());
-		    cart = cartRepo.save(newCart);
+			
+			// check duplicate - user + product
+			Optional<CartProduct> cpExist = cpRepo.findByCartUserUserIdAndProductProductId(cartOpt.get().getCartId(),
+					product.getProductId());
+			if (cpExist.isPresent()) {
+				return ResponseEntity.status(409).body("Product already exist in Cart");
+			}
 		}
-
-		
-		// check duplicate for product -> CartId + ProductId 
-	    Optional<CartProduct> existing = cpRepo.findByCartUserUserIdAndProductProductId(cart.getCartId(), dbProduct.get().getProductId());
-
-	    if (existing.isPresent()) {
-	        return ResponseEntity.status(409).body("Product already exists in cart");
-	    }
 		
 		CartProduct cp = new CartProduct();
-		cp.setCart(cart);
-		cp.setProduct(dbProduct.get());
+		
+		cp.setCart(cartOpt.get());
+		cp.setProduct(product);
 		cp.setQuantity(1);
 		cpRepo.save(cp);
-		
+
 		return ResponseEntity.status(200).body("Product added to cart");
 	}
 	
 	@PutMapping("/cart")
 	public ResponseEntity<Object> putCart(@RequestHeader("Authorization") String jwt, @RequestBody CartProduct cp){
 		String username = extractUsernameFromToken(jwt);
-	    Optional<UserInfo> user = userRepo.findByUsername(username);
-	    if (user.isEmpty()) return ResponseEntity.badRequest().body("User not found");
-
-	    // Fetch the cart for this user
-	    Optional<Cart> cartOpt = cartRepo.findByUserUsername(username);
-	    if (cartOpt.isEmpty()) return ResponseEntity.badRequest().body("Cart not found");
+		Optional<Cart> cartOpt = cartRepo.findByUserUsername(username);
 
 	    Cart cart = cartOpt.get();
 
-	    // Fetch product from DB
-	    Optional<Product> productOpt = productRepo.findById(cp.getProduct().getProductId());
-	    if (productOpt.isEmpty()) return ResponseEntity.badRequest().body("Product not found");
-
-	    Product product = productOpt.get();
-
 	    // Find existing CartProduct for this user + product
-	    Optional<CartProduct> existing = cpRepo.findByCartUserUserIdAndProductProductId(
-	            user.get().getUserId(), product.getProductId());
+	    Optional<CartProduct> cpExist = cpRepo.findByCartUserUserIdAndProductProductId(
+	            cart.getCartId(), cp.getProduct().getProductId());
 
-	    if (existing.isPresent()) {
-	        CartProduct existingCP = existing.get();
-
-	        if (cp.getQuantity() == 0) {
-	            cpRepo.delete(existingCP);
-	            return ResponseEntity.ok("Product removed from cart");
-	        }
-
-	        existingCP.setQuantity(cp.getQuantity());
-	        cpRepo.save(existingCP);
-	        return ResponseEntity.ok("Cart updated");
+	    if (cp.getQuantity() == 0) {
+	    	cpRepo.delete(cpExist.get());
+	    	return ResponseEntity.ok("Product removed from cart");
 	    }
-	    else {
-	    	CartProduct newCP = new CartProduct();
-	        newCP.setCart(cart);
-	        newCP.setProduct(cp.getProduct());
-	        newCP.setQuantity(cp.getQuantity());
-	        cpRepo.save(newCP);
-	        return ResponseEntity.ok("New Product added to cart");
-	    }
+	    
+	    cpExist.get().setQuantity(cp.getQuantity());
+	    cpRepo.save(cpExist.get());
+	    return ResponseEntity.ok("Cart updated");
 	    
 	}
 	
@@ -147,7 +110,6 @@ public class ConsumerController {
 	public ResponseEntity<Object> deleteCart(@RequestHeader("Authorization") String jwt, @RequestBody Product product){
 		String username = extractUsernameFromToken(jwt);
 		Optional<UserInfo> user = userRepo.findByUsername(username);
-		if (user.isEmpty()) return ResponseEntity.badRequest().body("User not found");
 		
 		//combo -> user_id + product_id
 		cpRepo.deleteByCartUserUserIdAndProductProductId(user.get().getUserId(), product.getProductId());

@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -31,6 +32,9 @@ import com.wingsUpSS6.repository.UserInfoRepository;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+	
+	@Autowired
+	private AuthEntryPoint authEntryPoint;
 	
 	@Autowired
 	private UserInfoRepository repository;
@@ -74,17 +78,24 @@ public class SecurityConfig {
 	
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
-//		return null;
-		 http
-         .csrf(csrf -> csrf.disable())  // disable CSRF for APIs
-         .authorizeHttpRequests(auth -> auth
-             .requestMatchers("/api/public/**").permitAll() // allow login/signup and H2
-//             .requestMatchers("/api/auth/consumer/**").hasAuthority("CONSUMER")
-//             .requestMatchers("/api/auth/seller/**").hasAuthority("SELLER")
-             .anyRequest().authenticated()
-         )
-         .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
+		
+		//step 1. disable csrf
+		http.csrf(csrf -> csrf.disable());
+		//step 2: change the session management policy
+		http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+		//step 3: register custom filter [JWTAuthFilter]
+		http.addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
+		//step 4: register url's
+		http.authenticationProvider(authenticationProvider());
+		http.authorizeHttpRequests(auth -> auth
+				.requestMatchers("/api/public/**").permitAll()
+//				.requestMatchers("/api/auth/consumer/**").hasAuthority("CONSUMER")
+//				.requestMatchers("/api/auth/seller/**").hasAuthority("SELLER")
+				.anyRequest().authenticated());
 
+		//add exception handler
+		http.exceptionHandling(ex->ex.authenticationEntryPoint(authEntryPoint)); //“If an unauthenticated request tries to access a protected API, call authEntryPoint.”So the entry point runs ONLY when authentication fails.
+		
      return http.build();
 	}
 	
