@@ -14,4 +14,27 @@
 		}
 
 3. Not using UserInfoUserDetails implements UserDetails [separate class]. Instead, implements UserDetails in Entity class named "UserInfo". [and override the methods]
-4. 
+4. Not using UserInfoUserDetailsService implements UserDetailsService [separate class]. Instead, create @Bean UserDetailsService in SecurityConfig and we also need to create @Bean of JwtAuthFilter to avoid circular dependency between: SecurityConfig  →  JwtAuthFilter  →  UserDetailsService  →  SecurityConfig. This happens ONLY when you autowire 	JwtAuthFilter inside SecurityConfig, and inside JwtAuthFilter you autowire UserDetailsService.
+
+   			@Bean
+			UserDetailsService userDetailsService() {
+				return new UserDetailsService() {
+			
+					@Override
+					public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+						Optional<UserInfo> userInfo = repository.findByUsername(username);
+
+		        		if(userInfo.isPresent()){
+		            		return new UserInfo(userInfo.get().getUsername(),userInfo.get().getPassword(),userInfo.get().getRoles()); //We can't directly return object of UserDetails, since UserDetails is an interface.
+		        		}
+		        		else{
+		            		throw new UsernameNotFoundException("User Not Found..");
+		        		}
+					}
+			};
+		}
+
+          @Bean
+          JwtAuthFilter jwtAuthFilter() {
+			  return new JwtAuthFilter();
+          }
