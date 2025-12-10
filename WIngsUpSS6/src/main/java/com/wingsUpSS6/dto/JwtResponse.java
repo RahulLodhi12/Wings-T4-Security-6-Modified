@@ -3,6 +3,7 @@ package com.wingsUpSS6.dto;
 
 public class JwtResponse {
     private String accessToken;
+    
     private int status;
 
     public JwtResponse() {
