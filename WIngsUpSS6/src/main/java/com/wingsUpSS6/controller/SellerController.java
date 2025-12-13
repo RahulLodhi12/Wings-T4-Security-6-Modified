@@ -31,7 +31,7 @@ import com.wingsUpSS6.service.JwtService;
 
 
 @RestController
-@PreAuthorize("hasAuthority('SELLER')")
+//@PreAuthorize("hasAuthority('SELLER')")
 @RequestMapping("/api/auth/seller")
 public class SellerController {
 	
@@ -47,9 +47,10 @@ public class SellerController {
 	@Autowired
 	JwtService jwtService;
 	
+	@PreAuthorize("hasAuthority('SELLER')")
 	@PostMapping("/product")
-	public ResponseEntity<Object> postProduct(@RequestHeader("Authorization") String jwt, @RequestBody Product product){
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Object> postProduct(@RequestHeader("Authorization") String authHeader, @RequestBody Product product){
+		String username = extractUsernameFromToken(authHeader);
 	    Optional<UserInfo> user = userRepo.findByUsername(username);
 	    
 	    Optional<Category> categoryOpt = categoryRepo.findByCategoryName(product.getCategory().getCategoryName());
@@ -77,26 +78,28 @@ public class SellerController {
 	    String location = "http://localhost:8000/api/auth/seller/product/" + savedProduct.getProductId();
 
 
-//	    return ResponseEntity.created(URI.create(location)).body(savedProduct);
+	    return ResponseEntity.created(URI.create(location)).body(savedProduct);
 //	    --------------OR---------------
-	    return ResponseEntity
-	            .status(201)             // Set HTTP 201 Created
-	            .header("Location", location)  // Set Location header
-	            .body(savedProduct);     // Include the saved product in body
+//	    return ResponseEntity
+//	            .status(201)             // Set HTTP 201 Created
+//	            .header("Location", location)  // Set Location header
+//	            .body(savedProduct);     // Include the saved product in body
 	    
 	}
 
+	@PreAuthorize("hasAuthority('SELLER')")
 	@GetMapping("/product")
-	public ResponseEntity<Object> getAllProducts(@RequestHeader("Authorization") String jwt){	
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Object> getAllProducts(@RequestHeader("Authorization") String authHeader){	
+		String username = extractUsernameFromToken(authHeader);
 		Optional<UserInfo> user = userRepo.findByUsername(username); //seller
 		
 		return ResponseEntity.ok(productRepo.findBySellerUserId(user.get().getUserId()));
 	}
 	
+	@PreAuthorize("hasAuthority('SELLER')")
 	@GetMapping("/product/{productId}")
-	public ResponseEntity<Object> getProduct(@RequestHeader("Authorization") String jwt, @PathVariable Integer productId){
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Object> getProduct(@RequestHeader("Authorization") String authHeader, @PathVariable Integer productId){
+		String username = extractUsernameFromToken(authHeader);
 		Optional<UserInfo> user = userRepo.findByUsername(username); //seller
 		
 		//combo: user_id + product_id
@@ -109,9 +112,10 @@ public class SellerController {
 		}
 	}
 	
+	@PreAuthorize("hasAuthority('SELLER')")
 	@PutMapping("/product")
-	public ResponseEntity<Object> putProduct(@RequestHeader("Authorization") String jwt, @RequestBody Product updatedProduct){
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Object> putProduct(@RequestHeader("Authorization") String authHeader, @RequestBody Product updatedProduct){
+		String username = extractUsernameFromToken(authHeader);
 		Optional<UserInfo> user = userRepo.findByUsername(username); //seller
 	
 		//combo: user_id + product_id
@@ -136,9 +140,10 @@ public class SellerController {
 		return ResponseEntity.ok().body("Updated..");	
 	}
 	
+	@PreAuthorize("hasAuthority('SELLER')")
 	@DeleteMapping("/product/{productId}")
-	public ResponseEntity<Product> deleteProduct(@RequestHeader("Authorization") String jwt, @PathVariable Integer productId){
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Product> deleteProduct(@RequestHeader("Authorization") String authHeader, @PathVariable Integer productId){
+		String username = extractUsernameFromToken(authHeader);
 		Optional<UserInfo> user = userRepo.findByUsername(username); //seller
 		
 		//combo: user_id + product_id
@@ -149,9 +154,9 @@ public class SellerController {
 		return ResponseEntity.ok().build();
 	}
 	
-	public String extractUsernameFromToken(String jwt) {
-		if(jwt!=null && jwt.startsWith("Bearer ")) {
-			String token = jwt.substring(7);
+	public String extractUsernameFromToken(String authHeader) {
+		if(authHeader!=null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
 			String username = jwtService.extractUsername(token);
 			return username;
 		}

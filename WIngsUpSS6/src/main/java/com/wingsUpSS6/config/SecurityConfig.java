@@ -55,7 +55,7 @@ public class SecurityConfig {
 	
 	@Bean
 	UserDetailsService userDetailsService() {
-		return new UserDetailsService() {
+		return new UserDetailsService() { //Anonymous Inner Class
 			
 			@Override
 			public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -70,10 +70,11 @@ public class SecurityConfig {
 			}
 		};
 	}
+
 	
 	@Bean
 	WebSecurityCustomizer webSecurityCustomizer() {
-		return (web) -> web.ignoring().requestMatchers(new AntPathRequestMatcher("/h2-console/**"));
+		return (web) -> web.ignoring().requestMatchers("/h2-console/**");
 	}
 	
 	@Bean

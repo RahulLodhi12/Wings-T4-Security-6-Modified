@@ -27,7 +27,7 @@ import com.wingsUpSS6.service.JwtService;
 
 
 @RestController
-@PreAuthorize("hasAuthority('CONSUMER')") //it will apply to every method inside that controller/service.
+//@PreAuthorize("hasAuthority('CONSUMER')") //it will apply to every method inside that controller/service.
 @RequestMapping("/api/auth/consumer")
 public class ConsumerController {
 	
@@ -46,10 +46,11 @@ public class ConsumerController {
 	@Autowired
 	JwtService jwtService;
 	
-//	@PreAuthorize("hasAuthority('CONSUMER')")
+	//authHeader -> [Bearer ncjajajbasjcjascncjcaslcncsnl]
+	@PreAuthorize("hasAuthority('CONSUMER')")
 	@GetMapping("/cart")
-	public ResponseEntity<Object> getCart(@RequestHeader("Authorization") String jwt){
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Object> getCart(@RequestHeader("Authorization") String authHeader){
+		String username = extractUsernameFromToken(authHeader);
 		Optional<Cart> cart = cartRepo.findByUserUsername(username);
 		if (cart.isPresent()) {
 			return ResponseEntity.ok(cart.get());
@@ -58,10 +59,10 @@ public class ConsumerController {
 	}
 	
 
-//	@PreAuthorize("hasAuthority('CONSUMER')")
+	@PreAuthorize("hasAuthority('CONSUMER')")
 	@PostMapping("/cart")
-	public ResponseEntity<Object> postCart(@RequestHeader("Authorization") String jwt, @RequestBody Product product){
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Object> postCart(@RequestHeader("Authorization") String authHeader, @RequestBody Product product){
+		String username = extractUsernameFromToken(authHeader);
 		Optional<Cart> cartOpt = cartRepo.findByUserUsername(username);
 
 		if (cartOpt.isPresent()) {
@@ -84,9 +85,10 @@ public class ConsumerController {
 		return ResponseEntity.status(200).body("Product added to cart");
 	}
 	
+	@PreAuthorize("hasAuthority('CONSUMER')")
 	@PutMapping("/cart")
-	public ResponseEntity<Object> putCart(@RequestHeader("Authorization") String jwt, @RequestBody CartProduct cp){
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Object> putCart(@RequestHeader("Authorization") String authHeader, @RequestBody CartProduct cp){
+		String username = extractUsernameFromToken(authHeader);
 		Optional<Cart> cartOpt = cartRepo.findByUserUsername(username);
 
 	    Cart cart = cartOpt.get();
@@ -106,9 +108,11 @@ public class ConsumerController {
 	    
 	}
 	
+	
+	@PreAuthorize("hasAuthority('CONSUMER')")
 	@DeleteMapping("/cart")
-	public ResponseEntity<Object> deleteCart(@RequestHeader("Authorization") String jwt, @RequestBody Product product){
-		String username = extractUsernameFromToken(jwt);
+	public ResponseEntity<Object> deleteCart(@RequestHeader("Authorization") String authHeader, @RequestBody Product product){
+		String username = extractUsernameFromToken(authHeader);
 		Optional<UserInfo> user = userRepo.findByUsername(username);
 		
 		//combo -> user_id + product_id
@@ -116,9 +120,9 @@ public class ConsumerController {
 		return ResponseEntity.ok("Product removed from cart");
 	}
 	
-	public String extractUsernameFromToken(String jwt) {
-		if(jwt!=null && jwt.startsWith("Bearer ")) {
-			String token = jwt.substring(7);
+	public String extractUsernameFromToken(String authHeader) {
+		if(authHeader!=null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
 			String username = jwtService.extractUsername(token);
 			return username;
 		}
