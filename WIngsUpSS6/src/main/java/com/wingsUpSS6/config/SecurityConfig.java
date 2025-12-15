@@ -1,5 +1,6 @@
 package com.wingsUpSS6.config;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,7 +24,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 //import com.wings.config.UserInfoUserDetailsService;
 import com.wingsUpSS6.filter.JwtAuthFilter;
@@ -62,7 +64,9 @@ public class SecurityConfig {
 				Optional<UserInfo> userInfo = repository.findByUsername(username);
 
 		        if(userInfo.isPresent()){
-		            return new UserInfo(userInfo.get().getUsername(),userInfo.get().getPassword(),userInfo.get().getRoles()); //We can't directly return object of UserDetails, since UserDetails is an interface.
+//		            return new UserInfo(userInfo.get().getUsername(),userInfo.get().getPassword(),userInfo.get().getRoles()); //We can't directly return object of UserDetails, since UserDetails is an interface.
+		            
+		            return new User(userInfo.get().getUsername(),userInfo.get().getPassword(),List.of(new SimpleGrantedAuthority(userInfo.get().getRoles()))); //no need to implements UserDetails interface
 		        }
 		        else{
 		            throw new UsernameNotFoundException("User Not Found..");
